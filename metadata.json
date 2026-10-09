@@ -1,0 +1,8 @@
+{
+  "name": "Control de Obra",
+  "description": "Sistema de gestión y supervisión de avance diario en obras de construcción civil, control de partidas, personal, equipos, materiales e incidencias.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

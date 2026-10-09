@@ -1,0 +1,334 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "Información general y datos contractuales de las obras",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nombre": { "type": "string" },
+        "codigo": { "type": "string" },
+        "cliente": { "type": "string" },
+        "contratista": { "type": "string" },
+        "supervisor": { "type": "string" },
+        "residente": { "type": "string" },
+        "asistente": { "type": "string" },
+        "ubicacion": { "type": "string" },
+        "fechaInicio": { "type": "string" },
+        "fechaFinEstimada": { "type": "string" },
+        "presupuestoContractual": { "type": "number" },
+        "moneda": { "type": "string" },
+        "frentesTrabajo": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["nombre", "codigo"]
+    },
+    "Partida": {
+      "title": "Partida",
+      "description": "Catálogo de partidas contractuales, metrados presupuestados y acumulados",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "codigo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "categoria": { "type": "string" },
+        "unidad": { "type": "string" },
+        "metradoContractual": { "type": "number" },
+        "metradoAcumulado": { "type": "number" },
+        "metradoDia": { "type": "number" },
+        "porcentajeAvance": { "type": "number" },
+        "frentePredeterminado": { "type": "string" },
+        "precioUnitario": { "type": "number" }
+      },
+      "required": ["codigo", "descripcion", "unidad", "metradoContractual"]
+    },
+    "DailyReport": {
+      "title": "DailyReport",
+      "description": "Reporte diario de actividades, cuadrillas, metrados ejecutados y clima",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fecha": { "type": "string" },
+        "obraId": { "type": "string" },
+        "obraNombre": { "type": "string" },
+        "frente": { "type": "string" },
+        "partidaId": { "type": "string" },
+        "partidaCodigo": { "type": "string" },
+        "partidaDescripcion": { "type": "string" },
+        "descripcionActividad": { "type": "string" },
+        "metradoEjecutado": { "type": "number" },
+        "unidad": { "type": "string" },
+        "numTrabajadores": { "type": "number" },
+        "equiposUtilizados": { "type": "string" },
+        "materialesUtilizados": { "type": "string" },
+        "porcentajeAvance": { "type": "number" },
+        "observaciones": { "type": "string" },
+        "fotografias": { "type": "array", "items": { "type": "string" } },
+        "responsable": { "type": "string" },
+        "clima": { "type": "string" },
+        "turno": { "type": "string" }
+      },
+      "required": ["fecha", "partidaCodigo", "descripcionActividad"]
+    },
+    "WorkerPersonnel": {
+      "title": "WorkerPersonnel",
+      "description": "Registro de trabajadores, roles, especialidades y horas trabajadas en obra",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nombre": { "type": "string" },
+        "dni": { "type": "string" },
+        "cargo": { "type": "string" },
+        "especialidad": { "type": "string" },
+        "frente": { "type": "string" },
+        "horasTrabajadas": { "type": "number" },
+        "fecha": { "type": "string" },
+        "estado": { "type": "string" }
+      },
+      "required": ["nombre", "cargo", "especialidad", "fecha"]
+    },
+    "MaterialUsage": {
+      "title": "MaterialUsage",
+      "description": "Control de materiales en obra, remisiones, ingresos y consumos diarios",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "material": { "type": "string" },
+        "unidad": { "type": "string" },
+        "cantidadUtilizada": { "type": "number" },
+        "fecha": { "type": "string" },
+        "partidaId": { "type": "string" },
+        "partidaCodigo": { "type": "string" },
+        "partidaDescripcion": { "type": "string" },
+        "guiaRemision": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "stockDisponible": { "type": "number" }
+      },
+      "required": ["material", "unidad", "cantidadUtilizada", "fecha"]
+    },
+    "EquipmentUsage": {
+      "title": "EquipmentUsage",
+      "description": "Maquinarias pesadas, herramientas mayores, horas efectivas y estado operativo",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "equipo": { "type": "string" },
+        "codigo": { "type": "string" },
+        "horasTrabajadas": { "type": "number" },
+        "operador": { "type": "string" },
+        "partidaId": { "type": "string" },
+        "partidaCodigo": { "type": "string" },
+        "partidaDescripcion": { "type": "string" },
+        "estado": { "type": "string" },
+        "fecha": { "type": "string" },
+        "observaciones": { "type": "string" }
+      },
+      "required": ["equipo", "codigo", "horasTrabajadas", "operador", "fecha"]
+    },
+    "Incident": {
+      "title": "Incident",
+      "description": "Libro de incidencias, no conformidades, eventos SST y ocurrencias",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fecha": { "type": "string" },
+        "tipo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "ubicacion": { "type": "string" },
+        "responsable": { "type": "string" },
+        "estado": { "type": "string" },
+        "severidad": { "type": "string" },
+        "fotografia": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "fechaSolucion": { "type": "string" },
+        "accionTomada": { "type": "string" }
+      },
+      "required": ["fecha", "tipo", "descripcion", "ubicacion", "responsable", "estado", "severidad"]
+    },
+    "PhotoEvidence": {
+      "title": "PhotoEvidence",
+      "description": "Panel de fotos de avance de obra con georreferenciación y frente",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "url": { "type": "string" },
+        "fecha": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "ubicacion": { "type": "string" },
+        "frente": { "type": "string" },
+        "partidaId": { "type": "string" },
+        "partidaCodigo": { "type": "string" },
+        "partidaDescripcion": { "type": "string" },
+        "reporteId": { "type": "string" },
+        "incidenciaId": { "type": "string" },
+        "responsable": { "type": "string" },
+        "etiquetas": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["url", "fecha", "descripcion", "ubicacion", "responsable"]
+    },
+    "DailyInspection": {
+      "title": "DailyInspection",
+      "description": "Punto de control de inspección diaria en obra con estado conforme/incidencia y observaciones",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fecha": { "type": "string" },
+        "itemId": { "type": "string" },
+        "estado": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "accionCorrectiva": { "type": "string" },
+        "horaRegistro": { "type": "string" },
+        "responsableVerificador": { "type": "string" },
+        "esIncidenciaRegistrada": { "type": "boolean" }
+      },
+      "required": ["fecha", "itemId", "estado"]
+    },
+    "ScheduleTask": {
+      "title": "ScheduleTask",
+      "description": "Partida programada en cronograma de cimentación con avances programado y real",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "wbs": { "type": "string" },
+        "nombre": { "type": "string" },
+        "fechaInicioProg": { "type": "string" },
+        "fechaFinProg": { "type": "string" },
+        "fechaInicioReal": { "type": "string" },
+        "fechaFinReal": { "type": "string" },
+        "duracionDias": { "type": "number" },
+        "avanceProgramado": { "type": "number" },
+        "avanceReal": { "type": "number" },
+        "metradoTotal": { "type": "number" },
+        "unidad": { "type": "string" },
+        "rutaCritica": { "type": "boolean" },
+        "responsable": { "type": "string" },
+        "cuadrilla": { "type": "string" },
+        "frente": { "type": "string" },
+        "estado": { "type": "string" }
+      },
+      "required": ["wbs", "nombre", "fechaInicioProg", "fechaFinProg", "avanceProgramado", "avanceReal"]
+    },
+    "ScheduleMilestone": {
+      "title": "ScheduleMilestone",
+      "description": "Hito técnico de liberación de calidad para cimentaciones",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "titulo": { "type": "string" },
+        "descripcion": { "type": "string" },
+        "fechaProgramada": { "type": "string" },
+        "fechaReal": { "type": "string" },
+        "completado": { "type": "boolean" },
+        "responsable": { "type": "string" }
+      },
+      "required": ["titulo", "fechaProgramada", "completado"]
+    },
+    "FoundationCheck": {
+      "title": "FoundationCheck",
+      "description": "Estado diario de actividades técnicas de cimentación",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fecha": { "type": "string" },
+        "activityId": { "type": "string" },
+        "hecho": { "type": "boolean" },
+        "horaRegistro": { "type": "string" },
+        "metradoEjecutado": { "type": "number" },
+        "unidad": { "type": "string" },
+        "observaciones": { "type": "string" },
+        "responsable": { "type": "string" },
+        "frente": { "type": "string" }
+      },
+      "required": ["fecha", "activityId", "hecho"]
+    },
+    "TestConnection": {
+      "title": "TestConnection",
+      "description": "Documento de prueba para validar conexión con Firestore",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" },
+        "testedBy": { "type": "string" }
+      },
+      "required": ["message", "timestamp", "status"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Perfil de usuario registrado en la plataforma Control de Obra",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "nombre": { "type": "string" },
+        "apellido": { "type": "string" },
+        "email": { "type": "string" },
+        "telefono": { "type": "string" },
+        "cargo": { "type": "string" },
+        "empresa": { "type": "string" },
+        "fotoPerfil": { "type": "string" },
+        "estado": { "type": "string" },
+        "fechaRegistro": { "type": "string" },
+        "ultimaConexion": { "type": "string" }
+      },
+      "required": ["uid", "nombre", "apellido", "email", "cargo", "empresa", "fechaRegistro"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "entity": "Project",
+      "description": "Colección de obras y proyectos de construcción"
+    },
+    "/partidas/{partidaId}": {
+      "entity": "Partida",
+      "description": "Colección de partidas presupuestales de la obra"
+    },
+    "/daily_reports/{reportId}": {
+      "entity": "DailyReport",
+      "description": "Colección de reportes diarios de obra"
+    },
+    "/workers/{workerId}": {
+      "entity": "WorkerPersonnel",
+      "description": "Colección de trabajadores y partes de asistencia diaria"
+    },
+    "/materials/{materialId}": {
+      "entity": "MaterialUsage",
+      "description": "Colección de materiales e insumos de obra"
+    },
+    "/equipment/{equipmentId}": {
+      "entity": "EquipmentUsage",
+      "description": "Colección de maquinarias y equipos de obra"
+    },
+    "/incidents/{incidentId}": {
+      "entity": "Incident",
+      "description": "Colección del libro de incidencias y ocurrencias"
+    },
+    "/photo_evidence/{photoId}": {
+      "entity": "PhotoEvidence",
+      "description": "Colección de fotografías de avance y control"
+    },
+    "/daily_inspections/{inspectionId}": {
+      "entity": "DailyInspection",
+      "description": "Colección de inspecciones diarias y control de SST"
+    },
+    "/foundation_schedule_tasks/{taskId}": {
+      "entity": "ScheduleTask",
+      "description": "Colección de tareas del cronograma de cimentación"
+    },
+    "/foundation_milestones/{milestoneId}": {
+      "entity": "ScheduleMilestone",
+      "description": "Colección de hitos de liberación técnica de cimentación"
+    },
+    "/foundation_checks/{checkId}": {
+      "entity": "FoundationCheck",
+      "description": "Colección de verificación diaria de actividades de cimentación"
+    },
+    "/test_connection/{testId}": {
+      "entity": "TestConnection",
+      "description": "Colección de pruebas de conexión en vivo con Cloud Firestore"
+    },
+    "/usuarios/{userId}": {
+      "entity": "UserProfile",
+      "description": "Colección de perfiles de usuario autenticados con Firebase Auth"
+    }
+  }
+}

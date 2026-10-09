@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Project and Settings
+    match /projects/{projectId} {
+      allow read, write: if true;
+    }
+
+    // Partidas
+    match /partidas/{partidaId} {
+      allow read, write: if true;
+    }
+
+    // Daily Reports
+    match /daily_reports/{reportId} {
+      allow read, write: if true;
+    }
+
+    // Workers / Personnel
+    match /workers/{workerId} {
+      allow read, write: if true;
+    }
+
+    // Materials
+    match /materials/{materialId} {
+      allow read, write: if true;
+    }
+
+    // Equipment
+    match /equipment/{equipmentId} {
+      allow read, write: if true;
+    }
+
+    // Incidents
+    match /incidents/{incidentId} {
+      allow read, write: if true;
+    }
+
+    // Photo Evidence
+    match /photo_evidence/{photoId} {
+      allow read, write: if true;
+    }
+
+    // Daily Inspections & SST
+    match /daily_inspections/{inspectionId} {
+      allow read, write: if true;
+    }
+
+    // Foundation Schedule Tasks
+    match /foundation_schedule_tasks/{taskId} {
+      allow read, write: if true;
+    }
+
+    // Foundation Milestones
+    match /foundation_milestones/{milestoneId} {
+      allow read, write: if true;
+    }
+
+    // Foundation Daily Checks
+    match /foundation_checks/{checkId} {
+      allow read, write: if true;
+    }
+
+    // Test Connection
+    match /test_connection/{testId} {
+      allow read, write: if true;
+    }
+
+    // Usuarios / User Profiles
+    match /usuarios/{userId} {
+      allow read, write: if true;
+    }
+  }
+}

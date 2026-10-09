@@ -1,0 +1,57 @@
+{
+  "name": "Control de Obra - Supervisión y Avance",
+  "short_name": "Control Obra",
+  "description": "Sistema profesional de gestión, control de avance diario, partidas, personal, equipos, materiales e incidencias para obras de construcción civil.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#f59e0b",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Reporte Diario",
+      "short_name": "Reporte",
+      "description": "Registrar reporte diario de obra",
+      "url": "/?tab=daily-reports",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Control de Partidas",
+      "short_name": "Partidas",
+      "description": "Ver metrados y avance de partidas",
+      "url": "/?tab=partidas",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Registro de Incidencias",
+      "short_name": "Incidencias",
+      "description": "Registrar no conformidad o incidente SST",
+      "url": "/?tab=incidents",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

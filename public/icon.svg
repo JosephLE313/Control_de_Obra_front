@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect x="24" y="24" width="464" height="464" rx="88" fill="none" stroke="#334155" stroke-width="4" stroke-opacity="0.5" />
+  
+  <!-- Outer glowing circle -->
+  <circle cx="256" cy="256" r="160" fill="#f59e0b" fill-opacity="0.12" />
+
+  <!-- Hard Hat / Casco Icon -->
+  <g filter="url(#shadow)">
+    <!-- Helmet Dome -->
+    <path d="M 140 260 C 140 170, 200 130, 256 130 C 312 130, 372 170, 372 260 Z" fill="url(#amberGrad)" />
+    <!-- Helmet Center Ridge -->
+    <path d="M 238 132 C 246 130, 266 130, 274 132 L 274 258 L 238 258 Z" fill="#b45309" />
+    <!-- Helmet Brim / Base -->
+    <path d="M 116 260 C 116 250, 130 248, 150 250 L 362 250 C 382 248, 396 250, 396 260 C 396 274, 380 278, 360 278 L 152 278 C 132 278, 116 274, 116 260 Z" fill="url(#amberGrad)" />
+    <!-- Shield Accent underneath -->
+    <rect x="180" y="295" width="152" height="24" rx="6" fill="#f8fafc" fill-opacity="0.9" />
+    <!-- Mini Crane / Grid accent -->
+    <path d="M 200 340 L 312 340 M 256 340 L 256 385 M 220 385 L 292 385" stroke="#f59e0b" stroke-width="12" stroke-linecap="round" />
+  </g>
+</svg>
