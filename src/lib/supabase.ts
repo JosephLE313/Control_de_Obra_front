@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { isValidPublicSupabaseConfig } from './publicCredentials';
 
 const STORAGE_KEY_URL = 'control_obra_supabase_url';
 const STORAGE_KEY_ANON_KEY = 'control_obra_supabase_anon_key';
@@ -21,8 +22,8 @@ export const SUPABASE_TABLES = {
   TEST_CONNECTION: 'test_connection'
 } as const;
 
-export const DEFAULT_SUPABASE_URL = 'https://controldeobra-app.supabase.co';
-export const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbnRyb2xkZW9icmEiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczODgyMzQwMCwiZXhwIjoyMDU0Mzg0MDAwfQ.7f8h9j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7';
+export const DEFAULT_SUPABASE_URL = '';
+export const DEFAULT_SUPABASE_ANON_KEY = '';
 
 export interface SupabaseConfig {
   url: string;
@@ -47,33 +48,18 @@ export function getStoredSupabaseConfig(): SupabaseConfig {
     }
   }
 
-  // Priority 1: custom credentials entered by user in UI
-  if (storageUrl && storageKey) {
-    return {
-      url: storageUrl,
-      anonKey: storageKey,
-      isConfigured: true,
-      source: 'storage'
-    };
+  // Never combine credentials from different sources or use bundled defaults.
+  if (isValidPublicSupabaseConfig(storageUrl, storageKey)) {
+    return { url: storageUrl, anonKey: storageKey, isConfigured: true, source: 'storage' };
   }
-
-  // Priority 2: environment variables (if provided and valid)
-  if (envUrl && envKey && !envUrl.includes('xyzcompany')) {
-    return {
-      url: envUrl,
-      anonKey: envKey,
-      isConfigured: true,
-      source: 'env'
-    };
+  // Purge invalid/privileged keys left by older versions.
+  if (storageKey) {
+    try { localStorage.removeItem(STORAGE_KEY_ANON_KEY); } catch { /* storage unavailable */ }
   }
-
-  // Priority 3: Ready-to-use default Supabase project configuration
-  return {
-    url: storageUrl || (envUrl && !envUrl.includes('xyzcompany') ? envUrl : DEFAULT_SUPABASE_URL),
-    anonKey: storageKey || (envKey && !envKey.includes('...') ? envKey : DEFAULT_SUPABASE_ANON_KEY),
-    isConfigured: true,
-    source: 'default'
-  };
+  if (isValidPublicSupabaseConfig(envUrl, envKey)) {
+    return { url: envUrl, anonKey: envKey, isConfigured: true, source: 'env' };
+  }
+  return { url: '', anonKey: '', isConfigured: false, source: 'default' };
 }
 
 let cachedClient: SupabaseClient | null = null;
@@ -81,7 +67,7 @@ let currentClientKey = '';
 
 export function getSupabaseClient(): SupabaseClient | null {
   const config = getStoredSupabaseConfig();
-  if (!config.url || !config.anonKey) {
+  if (!config.isConfigured) {
     return null;
   }
 
@@ -109,6 +95,7 @@ export function saveSupabaseConfig(url: string, anonKey: string): boolean {
   try {
     const cleanUrl = url.trim();
     const cleanKey = anonKey.trim();
+    if ((cleanUrl || cleanKey) && !isValidPublicSupabaseConfig(cleanUrl, cleanKey)) return false;
 
     if (cleanUrl) {
       localStorage.setItem(STORAGE_KEY_URL, cleanUrl);
@@ -244,7 +231,7 @@ CREATE TABLE IF NOT EXISTS public.test_connection (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Habilitar RLS (Row Level Security) y crear políticas públicas para permitir lectura y escritura desde la aplicación
+-- RLS: acceso cerrado por defecto; autorización por proyecto debe configurarse antes de usar la nube.
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.partidas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_reports ENABLE ROW LEVEL SECURITY;
@@ -259,7 +246,7 @@ ALTER TABLE public.foundation_milestones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.foundation_checks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_connection ENABLE ROW LEVEL SECURITY;
 
--- Políticas de acceso para anon / authenticated
+-- Retirar la política pública heredada. No conceder acceso automático a todo usuario autenticado.
 DO $$
 DECLARE
   tbl text;
@@ -269,7 +256,7 @@ BEGIN
     AND tablename IN ('projects', 'partidas', 'daily_reports', 'workers', 'materials', 'equipment', 'incidents', 'photo_evidence', 'daily_inspections', 'foundation_schedule', 'foundation_milestones', 'foundation_checks', 'test_connection')
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Permitir todo publico" ON public.%I', tbl);
-    EXECUTE format('CREATE POLICY "Permitir todo publico" ON public.%I FOR ALL USING (true) WITH CHECK (true)', tbl);
+    EXECUTE format('REVOKE ALL ON TABLE public.%I FROM PUBLIC, anon, authenticated', tbl);
   END LOOP;
 END $$;
 `;

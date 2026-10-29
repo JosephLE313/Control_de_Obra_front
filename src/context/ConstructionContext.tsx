@@ -356,7 +356,10 @@ export const ConstructionProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       setIsSyncing(true);
       try {
-        await supabaseDataService.seedInitialDataIfEmpty();
+        const client = getSupabaseClient();
+        if (!client) return;
+        const { error } = await client.from('projects').select('id').limit(1);
+        if (error) throw error;
         if (isSubscribed) {
           setIsSupabaseConnected(true);
           setLastSyncTime(new Date());

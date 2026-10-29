@@ -1,5 +1,5 @@
 // Service Worker para Control de Obra PWA / APK
-const CACHE_NAME = 'control-obra-v1';
+const CACHE_NAME = 'control-obra-static-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -49,7 +49,9 @@ self.addEventListener('fetch', (event) => {
       }
       return fetch(event.request).then((networkResponse) => {
         // Cache static JS/CSS/Fonts assets
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        const url = new URL(event.request.url);
+      const publicAsset = url.origin === self.location.origin && /\.(?:js|css|woff2?|png|jpg|jpeg|webp|svg|ico)$/.test(url.pathname) && !url.search;
+      if (publicAsset && networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);

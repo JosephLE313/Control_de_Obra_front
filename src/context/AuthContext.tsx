@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   auth,
+  isFirebaseConfigured,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -89,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Listen to Firebase Auth state changes
   useEffect(() => {
+    if (!isFirebaseConfigured) return;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setLoading(true);
       setCurrentUser(user);
@@ -146,6 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sign In with email & password
   const signIn = async (email: string, pass: string) => {
+    if (!isFirebaseConfigured) throw new Error('Configura Firebase en el entorno para usar autenticación.');
     setAuthError(null);
     try {
       const credential = await signInWithEmailAndPassword(auth, email.trim(), pass);
@@ -166,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Sign Up with user profile creation in Firestore
   const signUp = async (data: SignUpData) => {
+    if (!isFirebaseConfigured) throw new Error('Configura Firebase en el entorno para usar autenticación.');
     setAuthError(null);
     try {
       // 1. Create auth user in Firebase Authentication
@@ -225,6 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Reset Password
   const resetPassword = async (email: string) => {
+    if (!isFirebaseConfigured) throw new Error('Configura Firebase en el entorno para usar autenticación.');
     setAuthError(null);
     try {
       await sendPasswordResetEmail(auth, email.trim());

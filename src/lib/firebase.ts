@@ -28,7 +28,19 @@ import {
   orderBy,
   Firestore
 } from 'firebase/firestore';
-import firebaseConfigJson from '../../firebase-applet-config.json';
+// VITE variables contain PUBLIC client identifiers, never administrative credentials.
+const env = (import.meta as any).env || {};
+const firebaseConfigJson = {
+  apiKey: env.VITE_FIREBASE_API_KEY || 'local-demo',
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || 'demo-control-obra.firebaseapp.com',
+  projectId: env.VITE_FIREBASE_PROJECT_ID || 'demo-control-obra',
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: env.VITE_FIREBASE_APP_ID || 'local-demo',
+  measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || '',
+  firestoreDatabaseId: env.VITE_FIREBASE_DATABASE_ID || '(default)'
+};
+export const isFirebaseConfigured = Boolean(env.VITE_FIREBASE_API_KEY && env.VITE_FIREBASE_PROJECT_ID && env.VITE_FIREBASE_APP_ID);
 
 const firebaseConfig = {
   apiKey: firebaseConfigJson.apiKey,
@@ -47,7 +59,7 @@ export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth: Auth = getAuth(app);
 
 // Explicitly set browserLocalPersistence to guarantee session continuity across page reloads and browser restarts
-if (typeof window !== 'undefined') {
+if (isFirebaseConfigured && typeof window !== 'undefined') {
   setPersistence(auth, browserLocalPersistence).catch((err) => {
     console.warn('[Firebase Auth] Persistence initialization notice:', err);
   });

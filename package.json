@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "security:check": "node scripts/security-check.mjs",
+    "test:security": "node --import tsx --test scripts/security.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -34,5 +36,8 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
     "@types/express": "^4.17.21"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.13.6"
   }
 }

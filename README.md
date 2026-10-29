@@ -66,7 +66,7 @@ Requisitos: Git, Node.js y npm compatibles con las dependencias de `package.json
 ```bash
 git clone https://github.com/JosephLE313/Control_de_Obra_front.git
 cd Control_de_Obra_front
-npm install
+npm ci
 ```
 
 Antes de iniciar, copia `.env.example` a `.env.local` y configura un **proyecto de desarrollo propio** para las pruebas de persistencia:
@@ -76,9 +76,9 @@ VITE_SUPABASE_URL=https://TU_PROYECTO.supabase.co
 VITE_SUPABASE_ANON_KEY=TU_CLAVE_PUBLICA_ANON
 ```
 
-También existe un formulario de configuración de Supabase dentro de la aplicación. Su configuración guardada en el navegador tiene prioridad sobre las variables de entorno. La inicialización puede intentar crear datos de ejemplo si las tablas están vacías.
+También existe un formulario de configuración de Supabase dentro de la aplicación. Su configuración guardada en el navegador tiene prioridad sobre las variables de entorno. Abrir la aplicación no siembra datos de forma automática. La carga inicial remota es una acción explícita y requiere permisos.
 
-Revisa [la configuración de Supabase](src/lib/supabase.ts) y [la configuración de Firebase](src/lib/firebase.ts), que importa `firebase-applet-config.json` desde la raíz. El ejemplo de esquema SQL se encuentra en `src/lib/supabase.ts`; revisa sus políticas antes de ejecutarlo.
+Revisa [la configuración de Supabase](src/lib/supabase.ts), [la configuración de Firebase](src/lib/firebase.ts) y [la guía de seguridad](SECURITY.md). Firebase usa las variables públicas `VITE_FIREBASE_*` del ejemplo; no importa configuraciones locales versionadas. Sin configuración propia, la interfaz conserva el modo local y la nube no se activa. El SQL de ejemplo cierra el acceso público hasta configurar autorización por proyecto.
 
 ```bash
 npm run dev
@@ -86,7 +86,7 @@ npm run dev
 
 Abre **http://localhost:3000**. El comando de desarrollo expone el servidor en las interfaces de red del equipo, según la configuración actual del script.
 
-El archivo `.env.example` conserva variables de la plantilla original de AI Studio, como `GEMINI_API_KEY` y `APP_URL`. No se localizaron llamadas a Gemini en el código de `src/`; no se exige una clave de IA para una funcionalidad que no está implementada allí.
+El archivo `.env.example` contiene solo campos públicos vacíos. No se exige una clave de Gemini; cualquier futura API privada de IA deberá ejecutarse en un backend, nunca con secretos dentro de `VITE_*`.
 
 ## Comprobación y compilación
 
@@ -100,14 +100,14 @@ npm run preview
 - `build` genera el sitio en `dist/`.
 - `preview` sirve la compilación para revisión local; utiliza la dirección que muestre Vite.
 
-No hay un script `test` definido actualmente en `package.json`.
+Comprobaciones de seguridad: `npm run security:check` y `npm run test:security`. Usa npm y `package-lock.json` para reproducir las versiones auditadas.
 
 ## Persistencia y alcance actual
 
 - Los registros locales pertenecen al navegador y origen utilizados. Borrar su almacenamiento elimina esa copia; `localStorage` no sustituye un respaldo de datos.
 - La sincronización requiere un proyecto Supabase válido, tablas y políticas compatibles. Una interfaz de configuración no confirma por sí sola que exista una conexión operativa.
 - La aplicación muestra actualmente el panel sin exigir inicio de sesión y admite un perfil de invitado. La presencia de Firebase Authentication no equivale a tener todas las vistas protegidas.
-- El SQL de ejemplo incluye políticas de acceso público permisivas. Deben adaptarse al modelo de usuarios y permisos antes de guardar información real de una obra.
+- El SQL de ejemplo retira la política pública heredada y revoca permisos de clientes. La nube requiere un modelo explícito de autorización; no uses políticas abiertas para reactivar la sincronización. Las reglas Firestore exigen un miembro aprobado y protegen el perfil propio. Consulta `SECURITY.md` antes de desplegarlas.
 - El manifiesto y el service worker proporcionan una base para instalación y caché web. No se garantiza operación completa sin conexión ni resolución de conflictos; el repositorio no incluye un APK generado.
 - Los iconos PNG de 192 y 512 píxeles referidos en el manifiesto no están incluidos en `public/`; deben incorporarse para completar esos recursos de instalación.
 
@@ -130,3 +130,7 @@ Este README no anuncia una demo pública de la aplicación: el repositorio no ti
 ## Licencia
 
 No hay un archivo `LICENSE` general en el repositorio. Algunos archivos incluyen avisos propios; revisa las condiciones aplicables antes de reutilizar o redistribuir el código.
+
+## Seguridad y credenciales
+
+Consulta [SECURITY.md](SECURITY.md) para el alcance de la revisión, pruebas y pasos pendientes en Firebase/Supabase. Las correcciones del repositorio no despliegan permisos en los servidores ni eliminan copias históricas de claves públicas. Nunca compartas secretos en incidencias.

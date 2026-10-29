@@ -65,6 +65,7 @@ export const TestSupabaseModal: React.FC<TestSupabaseModalProps> = ({ isOpen, on
   const [urlInput, setUrlInput] = useState('');
   const [keyInput, setKeyInput] = useState('');
   const [configSaved, setConfigSaved] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   // Sync state
   const [isSeeding, setIsSeeding] = useState(false);
@@ -119,7 +120,9 @@ export const TestSupabaseModal: React.FC<TestSupabaseModalProps> = ({ isOpen, on
 
   const handleSaveConfig = (e: React.FormEvent) => {
     e.preventDefault();
+    setConfigError(null);
     const ok = saveSupabaseConfig(urlInput, keyInput);
+    if (!ok) setConfigError("Usa una URL válida y una clave publishable/anon pública. No se permiten claves secret ni service_role.");
     if (ok) {
       setConfigSaved(true);
       setTimeout(() => setConfigSaved(false), 2000);
@@ -433,16 +436,19 @@ export const TestSupabaseModal: React.FC<TestSupabaseModalProps> = ({ isOpen, on
                   <Key className="w-3.5 h-3.5 text-slate-500" />
                   <span>Anon Public Key (VITE_SUPABASE_ANON_KEY)</span>
                 </label>
-                <textarea
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                <input
+                  type="password"
+                  aria-label="Clave pública de Supabase"
+                  autoComplete="off"
+                  placeholder="Clave pública publishable o anon"
                   value={keyInput}
                   onChange={(e) => setKeyInput(e.target.value)}
-                  rows={3}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   required
                 />
               </div>
 
+              {configError && <p role="alert" className="text-xs text-red-700">{configError}</p>}
               <div className="flex items-center justify-between pt-2">
                 <div className="flex items-center space-x-3">
                   <a
@@ -466,7 +472,7 @@ export const TestSupabaseModal: React.FC<TestSupabaseModalProps> = ({ isOpen, on
                     }}
                     className="text-xs text-slate-500 hover:text-slate-800 underline cursor-pointer"
                   >
-                    Restablecer por defecto
+                    Borrar configuración local
                   </button>
                 </div>
 
@@ -487,7 +493,7 @@ export const TestSupabaseModal: React.FC<TestSupabaseModalProps> = ({ isOpen, on
                 <div>
                   <h4 className="text-xs font-bold text-slate-800">Script de Creación de Tablas (DDL)</h4>
                   <p className="text-[11px] text-slate-500">
-                    Copia y pega este script en el SQL Editor de tu Dashboard de Supabase.
+                    Este esquema cierra el acceso público. Configura autorización por proyecto antes de habilitar la sincronización.
                   </p>
                 </div>
                 <button

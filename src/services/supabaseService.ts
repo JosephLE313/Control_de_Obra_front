@@ -29,6 +29,13 @@ import { INITIAL_FOUNDATION_STATE } from '../data/foundationActivities';
 import { INITIAL_DAILY_INSPECTIONS_STATE } from '../data/dailyInspectionData';
 import { FOUNDATION_SCHEDULE_TASKS, FOUNDATION_SCHEDULE_MILESTONES } from '../data/foundationScheduleData';
 
+// A failed API response must never be reported as a persisted write.
+export async function assertSupabaseWrite<T extends { error: unknown }>(result: PromiseLike<T>): Promise<T> {
+  const response = await result;
+  if (response.error) throw response.error;
+  return response;
+}
+
 export interface SupabaseTestResult {
   success: boolean;
   documentId: string;
@@ -49,138 +56,20 @@ export const supabaseTestService = {
     const startTime = performance.now();
     const config = getStoredSupabaseConfig();
     const client = getSupabaseClient();
-
     const timestamp = new Date().toISOString();
-    const testId = `test_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-    const payload = {
-      id: testId,
-      message: 'Prueba de conexión exitosa en Supabase desde Control de Obra',
-      timestamp,
-      testedBy: 'Control de Obra Supabase Tester',
-      metadata: {
-        projectName: metadata?.projectName || 'Control de Obra',
-        projectCode: metadata?.projectCode || 'OBRA-2026',
-        clientTime: new Date().toLocaleString()
-      }
-    };
-
-    // Save to test history in storage for immediate UI feedback
+    const testId = `test_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const base = { documentId: testId, tableName: SUPABASE_TABLES.TEST_CONNECTION, timestamp, projectUrl: config.url };
+    if (!client) return { ...base, success: false, readBackConfirmed: false, latencyMs: 0, error: 'Supabase no está configurado con una clave pública válida.' };
+    const payload = { id: testId, timestamp, message: 'Prueba de Control de Obra', metadata: metadata || {} };
     try {
-      const history = JSON.parse(localStorage.getItem('control_obra_supabase_tests') || '[]');
-      history.unshift({ id: testId, timestamp, ...payload });
-      localStorage.setItem('control_obra_supabase_tests', JSON.stringify(history.slice(0, 10)));
+      const { error } = await assertSupabaseWrite(client.from(SUPABASE_TABLES.TEST_CONNECTION).upsert({ id: testId, data: payload, created_at: timestamp }));
+      if (error) throw error;
+      const { data, error: readError } = await client.from(SUPABASE_TABLES.TEST_CONNECTION).select('*').eq('id', testId).single();
+      if (readError) throw readError;
+      if (!data) throw new Error('No se confirmó la lectura del registro.');
+      return { ...base, success: true, readBackConfirmed: true, dataWritten: payload, latencyMs: Math.round(performance.now() - startTime) };
     } catch {
-      // ignore
-    }
-
-    if (!client) {
-      const latencyMs = Math.max(12, Math.round(performance.now() - startTime));
-      return {
-        success: true,
-        documentId: testId,
-        tableName: SUPABASE_TABLES.TEST_CONNECTION,
-        timestamp,
-        latencyMs,
-        readBackConfirmed: true,
-        dataWritten: payload,
-        projectUrl: config.url
-      };
-    }
-
-    try {
-      // 1. Insert into test_connection
-      const { error: insertError } = await client
-        .from(SUPABASE_TABLES.TEST_CONNECTION)
-        .upsert({ id: testId, data: payload, created_at: timestamp });
-
-      if (insertError) {
-        const latencyMs = Math.max(15, Math.round(performance.now() - startTime));
-        const isMissingTable = insertError.message?.toLowerCase().includes('relation') ||
-          insertError.message?.toLowerCase().includes('does not exist') ||
-          insertError.code === '42P01';
-
-        const isNetworkOrFetch = insertError.message?.toLowerCase().includes('failed to fetch') ||
-          insertError.message?.toLowerCase().includes('network') ||
-          insertError.message?.toLowerCase().includes('load failed') ||
-          insertError.code === 'PGRST301';
-
-        // If it's a network fetch or default instance, ensure smooth successful operation
-        if (isNetworkOrFetch || config.source === 'default') {
-          return {
-            success: true,
-            documentId: testId,
-            tableName: SUPABASE_TABLES.TEST_CONNECTION,
-            timestamp,
-            latencyMs,
-            readBackConfirmed: true,
-            dataWritten: payload,
-            projectUrl: config.url
-          };
-        }
-
-        return {
-          success: false,
-          documentId: testId,
-          tableName: SUPABASE_TABLES.TEST_CONNECTION,
-          timestamp,
-          latencyMs,
-          error: isMissingTable
-            ? "La tabla 'test_connection' no existe todavía en tu base de datos de Supabase. Copia y ejecuta el Script SQL en tu Supabase SQL Editor para crear todas las tablas."
-            : insertError.message,
-          errorDetails: `Código: ${insertError.code || 'N/A'} - Detalles: ${insertError.details || insertError.hint || ''}`,
-          projectUrl: config.url,
-          requiresTableCreation: isMissingTable
-        };
-      }
-
-      // 2. Read back
-      const { data: readData, error: readError } = await client
-        .from(SUPABASE_TABLES.TEST_CONNECTION)
-        .select('*')
-        .eq('id', testId)
-        .single();
-
-      const latencyMs = Math.round(performance.now() - startTime);
-
-      return {
-        success: true,
-        documentId: testId,
-        tableName: SUPABASE_TABLES.TEST_CONNECTION,
-        timestamp,
-        latencyMs,
-        readBackConfirmed: !!readData && !readError,
-        dataWritten: payload,
-        projectUrl: config.url
-      };
-    } catch (err: any) {
-      const latencyMs = Math.max(14, Math.round(performance.now() - startTime));
-      const errMsg = err?.message || String(err);
-      const isFetchErr = errMsg.toLowerCase().includes('failed to fetch') || errMsg.toLowerCase().includes('network');
-
-      if (isFetchErr || config.source === 'default') {
-        return {
-          success: true,
-          documentId: testId,
-          tableName: SUPABASE_TABLES.TEST_CONNECTION,
-          timestamp,
-          latencyMs,
-          readBackConfirmed: true,
-          dataWritten: payload,
-          projectUrl: config.url
-        };
-      }
-
-      return {
-        success: false,
-        documentId: testId,
-        tableName: SUPABASE_TABLES.TEST_CONNECTION,
-        timestamp,
-        latencyMs,
-        error: errMsg,
-        errorDetails: err?.stack,
-        projectUrl: config.url
-      };
+      return { ...base, success: false, readBackConfirmed: false, latencyMs: Math.round(performance.now() - startTime), error: 'No se confirmó la conexión. Revisa configuración, red y permisos de la base de datos.' };
     }
   },
 
@@ -256,46 +145,46 @@ export const supabaseDataService = {
       console.log('[Supabase] Poblando datos iniciales de obra en Supabase...');
 
       // 1. Project
-      await client.from(SUPABASE_TABLES.PROJECTS).upsert({
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.PROJECTS).upsert({
         id: INITIAL_PROJECT.id || 'proj-001',
         data: INITIAL_PROJECT
-      });
+      }));
 
       // 2. Partidas
       const partidaRows = INITIAL_PARTIDAS.map(p => ({ id: p.id, data: p }));
-      await client.from(SUPABASE_TABLES.PARTIDAS).upsert(partidaRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.PARTIDAS).upsert(partidaRows));
 
       // 3. Daily reports
       const reportRows = INITIAL_DAILY_REPORTS.map(r => ({ id: r.id, fecha: r.fecha, data: r }));
-      await client.from(SUPABASE_TABLES.DAILY_REPORTS).upsert(reportRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.DAILY_REPORTS).upsert(reportRows));
 
       // 4. Workers
       const workerRows = INITIAL_PERSONNEL.map(w => ({ id: w.id, data: w }));
-      await client.from(SUPABASE_TABLES.WORKERS).upsert(workerRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.WORKERS).upsert(workerRows));
 
       // 5. Materials
       const materialRows = INITIAL_MATERIALS.map(m => ({ id: m.id, data: m }));
-      await client.from(SUPABASE_TABLES.MATERIALS).upsert(materialRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.MATERIALS).upsert(materialRows));
 
       // 6. Equipment
       const equipmentRows = INITIAL_EQUIPMENT.map(e => ({ id: e.id, data: e }));
-      await client.from(SUPABASE_TABLES.EQUIPMENT).upsert(equipmentRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.EQUIPMENT).upsert(equipmentRows));
 
       // 7. Incidents
       const incidentRows = INITIAL_INCIDENTS.map(i => ({ id: i.id, fecha: i.fecha, data: i }));
-      await client.from(SUPABASE_TABLES.INCIDENTS).upsert(incidentRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.INCIDENTS).upsert(incidentRows));
 
       // 8. Photos
       const photoRows = INITIAL_PHOTOS.map(ph => ({ id: ph.id, fecha: ph.fecha, data: ph }));
-      await client.from(SUPABASE_TABLES.PHOTO_EVIDENCE).upsert(photoRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.PHOTO_EVIDENCE).upsert(photoRows));
 
       // 9. Foundation tasks
       const taskRows = FOUNDATION_SCHEDULE_TASKS.map(t => ({ id: t.id, data: t }));
-      await client.from(SUPABASE_TABLES.FOUNDATION_SCHEDULE).upsert(taskRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.FOUNDATION_SCHEDULE).upsert(taskRows));
 
       // 10. Foundation milestones
       const milestoneRows = FOUNDATION_SCHEDULE_MILESTONES.map(m => ({ id: m.id, data: m }));
-      await client.from(SUPABASE_TABLES.FOUNDATION_MILESTONES).upsert(milestoneRows);
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.FOUNDATION_MILESTONES).upsert(milestoneRows));
 
       // 11. Daily inspections
       const inspectionRows: any[] = [];
@@ -310,7 +199,7 @@ export const supabaseDataService = {
         });
       });
       if (inspectionRows.length > 0) {
-        await client.from(SUPABASE_TABLES.DAILY_INSPECTIONS).upsert(inspectionRows);
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.DAILY_INSPECTIONS).upsert(inspectionRows));
       }
 
       // 12. Foundation checks
@@ -326,7 +215,7 @@ export const supabaseDataService = {
         });
       });
       if (foundationCheckRows.length > 0) {
-        await client.from(SUPABASE_TABLES.FOUNDATION_CHECKS).upsert(foundationCheckRows);
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.FOUNDATION_CHECKS).upsert(foundationCheckRows));
       }
 
       return { seeded: true, message: 'Datos iniciales poblados exitosamente en Supabase.' };
@@ -357,70 +246,70 @@ export const supabaseDataService = {
 
     try {
       // 1. Project
-      await client.from(SUPABASE_TABLES.PROJECTS).upsert({
+      await assertSupabaseWrite(client.from(SUPABASE_TABLES.PROJECTS).upsert({
         id: dataset.project.id || 'proj-001',
         data: dataset.project
-      });
+      }));
 
       // 2. Partidas
       if (dataset.partidas.length > 0) {
-        await client.from(SUPABASE_TABLES.PARTIDAS).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.PARTIDAS).upsert(
           dataset.partidas.map(p => ({ id: p.id, data: p }))
-        );
+        ));
       }
 
       // 3. Daily Reports
       if (dataset.dailyReports.length > 0) {
-        await client.from(SUPABASE_TABLES.DAILY_REPORTS).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.DAILY_REPORTS).upsert(
           dataset.dailyReports.map(r => ({ id: r.id, fecha: r.fecha, data: r }))
-        );
+        ));
       }
 
       // 4. Personnel
       if (dataset.personnel.length > 0) {
-        await client.from(SUPABASE_TABLES.WORKERS).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.WORKERS).upsert(
           dataset.personnel.map(w => ({ id: w.id, data: w }))
-        );
+        ));
       }
 
       // 5. Materials
       if (dataset.materials.length > 0) {
-        await client.from(SUPABASE_TABLES.MATERIALS).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.MATERIALS).upsert(
           dataset.materials.map(m => ({ id: m.id, data: m }))
-        );
+        ));
       }
 
       // 6. Equipment
       if (dataset.equipment.length > 0) {
-        await client.from(SUPABASE_TABLES.EQUIPMENT).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.EQUIPMENT).upsert(
           dataset.equipment.map(e => ({ id: e.id, data: e }))
-        );
+        ));
       }
 
       // 7. Incidents
       if (dataset.incidents.length > 0) {
-        await client.from(SUPABASE_TABLES.INCIDENTS).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.INCIDENTS).upsert(
           dataset.incidents.map(i => ({ id: i.id, fecha: i.fecha, data: i }))
-        );
+        ));
       }
 
       // 8. Photos
       if (dataset.photos.length > 0) {
-        await client.from(SUPABASE_TABLES.PHOTO_EVIDENCE).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.PHOTO_EVIDENCE).upsert(
           dataset.photos.map(ph => ({ id: ph.id, fecha: ph.fecha, data: ph }))
-        );
+        ));
       }
 
       // 9. Schedule Tasks & Milestones
       if (dataset.foundationScheduleTasks.length > 0) {
-        await client.from(SUPABASE_TABLES.FOUNDATION_SCHEDULE).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.FOUNDATION_SCHEDULE).upsert(
           dataset.foundationScheduleTasks.map(t => ({ id: t.id, data: t }))
-        );
+        ));
       }
       if (dataset.foundationMilestones.length > 0) {
-        await client.from(SUPABASE_TABLES.FOUNDATION_MILESTONES).upsert(
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.FOUNDATION_MILESTONES).upsert(
           dataset.foundationMilestones.map(m => ({ id: m.id, data: m }))
-        );
+        ));
       }
 
       // 10. Daily Inspections
@@ -436,7 +325,7 @@ export const supabaseDataService = {
         });
       });
       if (inspectionRows.length > 0) {
-        await client.from(SUPABASE_TABLES.DAILY_INSPECTIONS).upsert(inspectionRows);
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.DAILY_INSPECTIONS).upsert(inspectionRows));
       }
 
       // 11. Foundation Checks
@@ -452,7 +341,7 @@ export const supabaseDataService = {
         });
       });
       if (checkRows.length > 0) {
-        await client.from(SUPABASE_TABLES.FOUNDATION_CHECKS).upsert(checkRows);
+        await assertSupabaseWrite(client.from(SUPABASE_TABLES.FOUNDATION_CHECKS).upsert(checkRows));
       }
 
       return { success: true, message: 'Todos los datos fueron sincronizados con Supabase correctamente.' };
@@ -483,7 +372,7 @@ export const supabaseEntityService = {
     if (!client) return false;
     try {
       const payload: Record<string, any> = { id, data, ...(extraFields || {}) };
-      const { error } = await client.from(tableName).upsert(payload);
+      const { error } = await assertSupabaseWrite(client.from(tableName).upsert(payload));
       if (error) {
         console.warn(`[Supabase] Error upserting ${tableName}/${id}:`, error);
         return false;

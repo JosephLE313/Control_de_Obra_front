@@ -6,3 +6,12 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Private/local credentials (never commit)
+firebase-applet-config.json
+*.pem
+*.key
+*service-account*.json
+*serviceAccount*.json
+.env*.bak
+.env*.backup
